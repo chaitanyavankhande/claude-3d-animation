@@ -1,0 +1,19 @@
+{
+  "name": "atlas-agentic-os",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A 15-second Three.js boot sequence that lands on a JARVIS-style agentic OS dashboard, with Claude as the brain.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "start": "node brain/server.mjs",
+    "record": "node scripts/record.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.131.0"
+  },
+  "devDependencies": {
+    "playwright": "1.56.1",
+    "three": "0.170.0"
+  }
+}
