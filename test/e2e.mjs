@@ -132,7 +132,7 @@ try {
 
   // no key: the HUD loads but asks are refused with a clear message
   atlas.kill(); await new Promise((r) => atlas.once("exit", r));
-  log = ""; atlas = start({}); atlas.stdout.on("data", (d) => (log += d));
+  log = ""; atlas = start({ ANTHROPIC_API_KEY: "" }); atlas.stdout.on("data", (d) => (log += d));   // "" also overrides a key in your .env
   for (let i = 0; i < 80 && !log.includes("ATLAS online"); i++) await new Promise((r) => setTimeout(r, 100));
   const t2 = (await (await fetch(BASE + "/")).text()).match(/name="atlas-token" content="([0-9a-f]+)"/)[1];
   const r = await fetch(BASE + "/api/ask", { method: "POST", headers: { "content-type": "application/json", "x-atlas-token": t2 }, body: JSON.stringify({ text: "hi" }) });

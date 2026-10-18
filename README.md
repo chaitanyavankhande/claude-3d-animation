@@ -18,18 +18,34 @@ No single product beats ATLAS on both looks and capability, so ATLAS combines th
 | JARVIS hobby repos | HUD | partial | small and unaudited; one skips all permissions |
 | **ATLAS** (this repo) | **3D HUD** | ✅ via the Claude Agent SDK | ATLAS's look plus the official engine, with authorization on every change |
 
-## Run it
+## Run it on your laptop
+
+You need three things:
+- **Node.js** (the LTS version from nodejs.org)
+- **Git**
+- **An API key** from platform.claude.com, with some credit on it
 
 ```bash
+git clone -b claude/confident-edison-azywuh https://github.com/chaitanyavankhande/claude-3d-animation.git atlas
+cd atlas
+```
+
+- **Windows:** double-click `start-atlas.bat`.
+- **macOS:** double-click `start-atlas.command`. The first time, right-click it and choose Open.
+
+The first run creates `.env` and opens it. Paste your key in, save, and run the launcher again. It installs everything (about 300 MB, once) and opens ATLAS in your browser.
+
+Prefer the terminal? Do it by hand:
+
+```bash
+cp .env.example .env          # Windows: copy .env.example .env, then put your key in .env
 npm install
-export ANTHROPIC_API_KEY=sk-ant-...     # from platform.claude.com
-npm start                                # → http://127.0.0.1:7777
+npm start                     # → http://127.0.0.1:7777
 ```
 
 - **Try saying:**
   - "what's in my Downloads folder?"
-  - "summarise ~/uni/notes.md"
-  - "plan my week from my timetable"
+  - "summarise my notes in ~/uni"
   - "red alert"
   - "how's my laptop doing?"
 - **Reflex** runs Claude at low effort for speed. **Deep** runs it at high effort for harder work.
@@ -37,6 +53,7 @@ npm start                                # → http://127.0.0.1:7777
   - `Ctrl/⌘ + Enter` authorizes and `Esc` denies.
   - `Space` pauses the intro and `R` replays it.
   - **Stop** cancels a running task.
+- **To quit,** close the terminal window or press `Ctrl + C`.
 - **Two other ways to open it:**
   - Opened as a **Claude artifact**, it talks through your own Claude account and drives the HUD. It can't touch files there.
   - Opened as a plain file, it plays a scripted demo. Add `#tour` to the URL to watch it run itself.
@@ -56,7 +73,7 @@ The engine brings Claude Code's tools: read and search files, write and edit the
 
 ATLAS's own policy, in `brain/policy.mjs`, decides what's held. It overrides the engine even where Claude Code would allow an action by itself. When you deny an action, Claude is told and adapts.
 
-## Settings
+## Settings (in `.env`)
 
 | Variable | Default | Meaning |
 |---|---|---|

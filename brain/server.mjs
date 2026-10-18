@@ -1,10 +1,10 @@
 // ATLAS brain: serves the HUD and runs Claude's official agent engine (Claude Agent SDK,
 // the same engine as Claude Code) on your laptop.
 //
-//   export ANTHROPIC_API_KEY=sk-ant-...
+//   put ANTHROPIC_API_KEY=sk-ant-... in a .env file next to package.json (see .env.example)
 //   npm start                      ->  http://127.0.0.1:7777
 //
-// Settings (environment variables):
+// Settings (in .env, or as environment variables, which win):
 //   ATLAS_MODEL        default claude-opus-5-5
 //   ATLAS_WORKSPACE    folder Claude works in (default: your home folder)
 //   ATLAS_AUTO_EDITS=1 let file edits inside the workspace through without asking
@@ -26,13 +26,23 @@ import { z } from "zod";
 import { agentFor, describe, decide, tidy } from "./policy.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+
+// Read settings from .env (KEY=value per line) without overriding anything already set.
+try {
+  for (const line of (await fs.readFile(path.join(ROOT, ".env"), "utf8")).split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !line.trim().startsWith("#") && process.env[m[1]] === undefined) process.env[m[1]] = /^["']/.test(m[2]) ? m[2].replace(/^(["'])(.*)\1$/, "$2") : m[2].replace(/\s+#.*$/, "");
+  }
+} catch { /* no .env: environment variables only */ }
+const home = (p) => p.replace(/^~(?=$|[\\/])/, os.homedir());
+
 const PORT = Number(process.env.PORT || 7777);
 const HOST = "127.0.0.1";
 const TOKEN = crypto.randomBytes(24).toString("hex");
 const THREE = path.join(ROOT, "node_modules", "three");
 const cfg = {
   model: process.env.ATLAS_MODEL || "claude-opus-5-5",
-  workspace: path.resolve(process.env.ATLAS_WORKSPACE || os.homedir()),
+  workspace: path.resolve(home(process.env.ATLAS_WORKSPACE || os.homedir())),
   autoEdits: process.env.ATLAS_AUTO_EDITS === "1",
   budget: Number(process.env.ATLAS_BUDGET_USD || 2),
   owner: process.env.ATLAS_OWNER || os.userInfo().username,
@@ -249,5 +259,10 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`ATLAS online  →  http://${HOST}:${PORT}`);
   console.log(`brain: ${cfg.model} via Claude Agent SDK · workspace ${tidy(cfg.workspace)} · cap $${cfg.budget}/request`);
-  if (!hasKey()) console.log("No ANTHROPIC_API_KEY set: the HUD loads, but Claude can't act until you add one.");
+  if (!hasKey()) console.log("No ANTHROPIC_API_KEY found: put it in the .env file (see .env.example), then restart. The HUD loads, but Claude can't act until then.");
+  if (process.env.ATLAS_OPEN === "1") {
+    const url = `http://${HOST}:${PORT}`;
+    const [cmd, args] = process.platform === "darwin" ? ["open", [url]] : process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] : ["xdg-open", [url]];
+    import("node:child_process").then(({ spawn }) => spawn(cmd, args, { stdio: "ignore", detached: true }).on("error", () => {}).unref());
+  }
 });
