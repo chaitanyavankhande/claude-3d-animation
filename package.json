@@ -1,19 +1,21 @@
 {
-  "name": "quire",
-  "version": "1.0.0",
+  "name": "atlas-agentic-os",
+  "version": "2.0.0",
   "private": true,
-  "description": "A personal operating system shaped like a notebook. Claude is the scribe: it writes what it means to do in pencil, and only what you allow becomes ink.",
+  "description": "ATLAS: a JARVIS-style 3D HUD for your laptop, powered by Claude's official agent engine (Claude Agent SDK). Real tasks, with risky actions held for your authorization.",
   "type": "module",
   "license": "MIT",
   "engines": { "node": ">=20" },
   "scripts": {
-    "start": "node server/quire.mjs",
+    "start": "node brain/server.mjs",
     "test": "node test/policy.mjs && node test/e2e.mjs",
-    "record": "node scripts/record.mjs",
-    "record:tour": "node scripts/record.mjs --tour"
+    "record": "node scripts/record.mjs"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "0.131.0"
+    "@anthropic-ai/claude-agent-sdk": "0.3.289",
+    "@anthropic-ai/sdk": "0.131.0",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "playwright": "1.56.1",

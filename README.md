@@ -1,107 +1,93 @@
-# Quire
+# ATLAS · Agentic OS
 
-**A personal operating system shaped like a notebook.** Claude is the scribe. It writes what it means to do in **pencil**. What only *looks* inks itself. Changes to files ink themselves after a pause, and every one can be **erased**. Anything **permanent** stays in pencil until you ink it. Strike out any line you don't want.
+A JARVIS-style 3D HUD for your laptop. **Claude is the brain**, running on Anthropic's official agent engine, the **Claude Agent SDK** (the same engine as Claude Code). ATLAS can read, search, write and run things on your machine. Anything that changes your laptop stops on the HUD until you **authorize** it.
 
-![Quire mid-task: a permanent command waits for ink (scripted example)](media/quire-page.png)
+![ATLAS holding a file write for authorization](media/atlas-authorize.png)
 
-🎬 Opening: [`media/quire-opening-15s.mp4`](media/quire-opening-15s.mp4) · Demo: [`media/quire-tour.webm`](media/quire-tour.webm)
+🎬 [`media/atlas-30s.mp4`](media/atlas-30s.mp4): the 15-second boot sequence, then ATLAS doing a task (scripted demo).
 
----
+## Why this setup (market check, October 2026)
 
-## Why it's different
+No single product beats ATLAS on both looks and capability, so ATLAS combines the best of each:
 
-Most agent UIs are a chat window plus permission pop-ups ("Allow this command?"). After the tenth pop-up you stop reading them. Quire replaces both with one grammar everyone already knows from paper:
+| Option | Looks | Real tasks on your laptop | Notes |
+|---|---|---|---|
+| Claude Desktop + Cowork | plain chat | ✅ the strongest (files, computer use, Chrome) | needs a paid plan; the official choice if you don't need the HUD |
+| OpenClaw (≈392k★) | chat apps | ✅ | many security advisories; tools run on the host by default |
+| Goose (Linux Foundation) | chat | ✅ via MCP | a solid open-source option |
+| JARVIS hobby repos | HUD | partial | small and unaudited; one skips all permissions |
+| **ATLAS** (this repo) | **3D HUD** | ✅ via the Claude Agent SDK | ATLAS's look plus the official engine, with authorization on every change |
 
-| On the page | What it means | What you do |
-|---|---|---|
-| *pencil* (grey, hand-lettered) | Claude intends this, but it hasn't happened | nothing, or **Strike** |
-| ink seeping along the line | it will happen in a moment | **Esc** to strike it |
-| **ink** (solid, upright) | it happened | **erase** it, if it changed a file |
-| ~~red strike~~ | you said no, and Claude was told | — |
-| highlighted pencil + ◆ | permanent: it waits for you | **Ink it** or **Strike** |
-
-The pencil-to-ink change is a real typographic transition. Quire animates the **Casual axis of the Recursive variable font** (`CASL 1 → 0`), so the letters firm up as an action commits.
-
-Four more ideas sit around that core:
-
-- **The book.** Each day is a chapter, saved as plain Markdown in `~/.quire/book/`. You can read it without Quire, and Claude reads past chapters as its memory.
-- **Margin notes.** Select any words Claude wrote and leave a note in the margin. If Claude is still working, the note reaches it at its very next step, so you can steer it without stopping it.
-- **The hum** (optional). You can *hear* Claude work: a soft note for each read, a warmer one for each change, a breath for each web look-up, and a bell when something waits for you. Leave it running in another window and you'll know when to look.
-- **The opening.** Once a day, a 15-second three.js scene plays. A lamp clicks on, the notebook opens, and your past chapters riffle by. Today's page writes itself, then the camera sinks into the paper and hands over to the real UI. three.js loads only for those 15 seconds and is disposed afterwards.
-
-**Prior art, honestly.**
-- Pausing for approval, checkpoints, sound cues for agents and daily-Markdown memory all exist elsewhere (Claude Code `/rewind`, Cline checkpoints, Agent FM, OpenClaw).
-- A prior-art search found no agent that does these three things:
-  - shows approval *typographically*, as pencil → ink in a prose log;
-  - runs reversible actions after a delay unless you strike them;
-  - marks every line with its permanence.
-- That combination is what's new here.
-
-## Run it on your laptop
+## Run it
 
 ```bash
 npm install
-export ANTHROPIC_API_KEY=sk-ant-...     # https://platform.claude.com
-npm start                                # → http://127.0.0.1:4417
+export ANTHROPIC_API_KEY=sk-ant-...     # from platform.claude.com
+npm start                                # → http://127.0.0.1:7777
 ```
 
-Open it in Chrome, Edge, Safari or Firefox. Pin the tab or install it as an app ("Install page as app" in Chrome/Edge) and it behaves like a desktop program.
+- **Try saying:**
+  - "what's in my Downloads folder?"
+  - "summarise ~/uni/notes.md"
+  - "plan my week from my timetable"
+  - "red alert"
+  - "how's my laptop doing?"
+- **Reflex** runs Claude at low effort for speed. **Deep** runs it at high effort for harder work.
+- **Keys:**
+  - `Ctrl/⌘ + Enter` authorizes and `Esc` denies.
+  - `Space` pauses the intro and `R` replays it.
+  - **Stop** cancels a running task.
+- **Two other ways to open it:**
+  - Opened as a **Claude artifact**, it talks through your own Claude account and drives the HUD. It can't touch files there.
+  - Opened as a plain file, it plays a scripted demo. Add `#tour` to the URL to watch it run itself.
 
-- **Without a key**, the notebook still opens, but Claude can't write.
-- **Without the server** (open `quire.html` directly), you get a scripted demo on a pretend "sandbox shelf". Add `#tour` to the URL to watch it play itself.
-- **As a Claude artifact**, the same page uses the viewer's own Claude account on the sandbox shelf. It needs no key and never touches a real computer.
+## What it can do
 
-## What Claude can do
+The engine brings Claude Code's tools: read and search files, write and edit them, run commands, search and read the web, plan, and delegate to subagents. Each tool lights up a node on the HUD:
 
-| Tool | Ink | Notes |
+| Agent | Tools | Goes through on its own? |
 |---|---|---|
-| Read files and folders (`text_editor`) | ○ looks | Inside your shelves. Sensitive files (`.ssh`, `.env`, keys) and anything outside the shelves wait. |
-| Create and edit files (`text_editor`) | ⌫ erasable | Snapshotted first. Erasing restores the file and also undoes later changes to the same file. |
-| `run_command` | ○ or ◆ | Read-only commands (`ls`, `cat`, `grep`, `git status`…) ink themselves. Everything else waits. |
-| `open_item` | ○ or ◆ | Documents, folders and https links ink themselves. Programs and scripts wait. |
-| `web_search`, `web_fetch` | ○ looks | Run on Anthropic's side. |
+| MEMORY | Read, Grep, Glob | ✅ (sensitive files such as `.ssh`, `.env` or keys are held) |
+| RESEARCH | WebSearch, WebFetch | ✅ |
+| PLANNER | TodoWrite, subagents | ✅ |
+| OPERATOR | Bash | read-only commands (`ls`, `cat`, `git status`…) ✅; everything else is **held** |
+| CODER | Write, Edit | **held** (set `ATLAS_AUTO_EDITS=1` to allow edits inside the workspace) |
+| VISION | images and PDFs; HUD tools (alert, focus, laptop stats) | ✅ |
 
-The command line covers almost everything else: Python, git, file moves, installs. Anything that isn't read-only stays in pencil until you ink it.
+ATLAS's own policy, in `brain/policy.mjs`, decides what's held. It overrides the engine even where Claude Code would allow an action by itself. When you deny an action, Claude is told and adapts.
 
-## Settings: `~/.quire/config.json`
+## Settings
 
-```json
-{
-  "owner": "Chaitanya",
-  "model": "claude-opus-5-5",
-  "effort": "medium",
-  "shelves": ["~"],
-  "inkErasable": "auto",
-  "seepMs": { "look": 700, "erasable": 2600 }
-}
-```
+| Variable | Default | Meaning |
+|---|---|---|
+| `ATLAS_MODEL` | `claude-opus-5-5` | `claude-sonnet-5-5` or `claude-haiku-5-5` are cheaper |
+| `ATLAS_WORKSPACE` | your home folder | the folder Claude works in |
+| `ATLAS_AUTO_EDITS` | off | `1` lets file edits inside the workspace through without asking |
+| `ATLAS_BUDGET_USD` | `2` | spending cap per request |
+| `ATLAS_OWNER` | your login name | what ATLAS calls you |
 
-- **`shelves`** are the folders Claude may read and change without asking. Narrow them, for example to `["~/uni", "~/Documents"]`.
-- **`inkErasable: "ask"`** makes every file change wait for you too.
-- **`model`** can be `claude-sonnet-5-5` or `claude-haiku-5-5` to cut cost.
-- **`~/.quire/standing-orders.md`** holds tasks that run each morning when you first open the new chapter.
+## Cost and sign-in
 
-## Cost
+- **API key, not your subscription.** ATLAS uses an API key, billed per token. Anthropic's terms say apps built on the Agent SDK must use API keys, not a Pro or Max login.
+- **Prices per million tokens:**
 
-Quire uses the Claude API, billed per token. You can't use a Claude Pro or Max subscription instead: Anthropic's terms require API-key authentication for apps you build yourself.
+  | Model | Input | Output |
+  |---|---|---|
+  | Opus 5.5 | $4 | $20 |
+  | Sonnet 5.5 | $2 | $10 |
+  | Haiku 5.5 | $0.10 | $0.50 |
 
-| Model | Input / output per million tokens |
-|---|---|
-| Opus 5.5 | $4 / $20 |
-| Sonnet 5.5 | $2 / $10 |
-| Haiku 5.5 | $0.10 / $0.50 |
+- **Spending cap:** each request stops at `ATLAS_BUDGET_USD`. The reply shows what it cost.
 
-Each request reuses the cached system prompt and conversation, which keeps long days cheaper.
-
-## Safety model
+## Safety
 
 - **The server only answers your own tab.**
   - It listens on `127.0.0.1` only.
-  - Each launch has a random token that every API call must present.
-  - Requests for any other host name are refused, which blocks DNS rebinding.
-- **Permanent actions always wait for you.**
-- **Erasable changes ink themselves** inside your shelves. A web page that tries to steer Claude (prompt injection) can still trigger those, but each one can be erased. Use `inkErasable: "ask"` if you want to approve everything.
-- **Erase covers changes made through the editor tool.** Changes a command makes can't be erased, which is why commands wait.
+  - Each launch has a random token, and every API call must present it.
+  - Requests for any other host name are refused.
+- **Your API key stays in the server process** and never reaches the page.
+- **The engine is isolated from your `~/.claude` settings** (`settingSources: []`), so ATLAS's policy is the authority on what's allowed.
+- **ATLAS can't click around your screen.** It works through files, commands and the web. For full computer use, Claude Desktop's Cowork is the official route.
 
 ## Tests
 
@@ -109,26 +95,31 @@ Each request reuses the cached system prompt and conversation, which keeps long 
 npm test
 ```
 
-- **29 policy checks:** which actions wait and which ink themselves.
-- **21 end-to-end checks** against the real server and a scripted stand-in for the Claude API. They cover tool loop, gating, strike, erase, margin notes reaching Claude mid-task, thinking blocks passed back unchanged, the Markdown book, and token/host security.
+- **31 policy checks:** what goes through and what's held.
+- **18 end-to-end checks.** These run the real Claude Agent SDK engine against a scripted stand-in for the Claude API. They cover:
+  - reads going through
+  - writes and deletes held
+  - deny and authorize both working
+  - Claude being told about a denial
+  - the HUD's red-alert tool
+  - session memory across requests
+  - the token and host checks
+  - the no-key message
 
 ## Files
 
 ```
-quire.html            the whole UI: page, pencil/ink, notes, hum, book, sandbox + demo brains, 3D opening (~90 KB)
-server/quire.mjs      local server: static page, events, token + host checks
-server/scribe.mjs     Claude agent loop (Messages API, streaming, progress updates, fallbacks)
-server/tools.mjs      tools, the ink policy, command/path classification
-server/book.mjs       chapters, Markdown export, snapshots for the eraser, config
-test/                 policy + end-to-end tests
-scripts/record.mjs    renders the opening to MP4 (frame by frame) or records the demo tour
+index.html          the HUD: 15 s three.js boot sequence, live agents, activity, authorization panel
+brain/server.mjs    local server: Claude Agent SDK engine, hooks + approvals, HUD tools, token/host checks
+brain/policy.mjs    what goes through and what's held; which agent lights up
+test/               policy + end-to-end tests
+scripts/record.mjs  renders the video frame by frame
 ```
 
 ## Limits
 
-- I tested this build on Linux only, in headless Chromium and against a mock API. **macOS and Windows are untested.** On Windows, commands run in PowerShell.
-- The scribe can't read PDFs unless `pdftotext` is installed.
-- One chapter is one conversation. Very long days get slower and cost more.
-- It controls your laptop through files, commands and opening things, not by clicking on screen. For screen-level control, look at Claude's computer-use tool or Claude Desktop's computer use.
+- I tested this on Linux only, in headless Chromium and against a mock API. **macOS and Windows are untested.** The Agent SDK ships its engine for both.
+- The engine adds about 240 MB to `node_modules`, because Claude Code's native binary comes with it.
+- "ATLAS" shares its name with OpenAI's ChatGPT Atlas browser. Rename it if that bothers you; nothing depends on the name.
 
 MIT licensed. three.js is MIT.

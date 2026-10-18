@@ -1,33 +1,31 @@
-// Which actions ink themselves and which wait for you.
+// What ATLAS lets through on its own, and what it holds for your authorization.
 //   node test/policy.mjs
 
 import assert from "node:assert/strict";
-import os from "node:os";
-import path from "node:path";
-import { classify, isReadOnlyCommand, EDITOR } from "../server/tools.mjs";
+import { decide, agentFor, isReadOnlyCommand } from "../brain/policy.mjs";
 
-const home = os.homedir();
-const cfg = { shelves: [path.join(home, "work")], home: path.join(home, ".quire"), inkErasable: "auto" };
-const c = (name, input) => classify(name, input, cfg);
 let n = 0;
 const check = (cond, msg) => { assert.ok(cond, msg); n++; };
+const v = (name, input, cfg) => decide(name, input, cfg).verdict;
 
 for (const cmd of ["ls -la", "git status", "git log --oneline", "grep -r TODO src", "find . -name '*.md'", "cat notes.md"]) check(isReadOnlyCommand(cmd), `read-only: ${cmd}`);
-for (const cmd of ["rm -rf ~", "ls; rm x", "cat a > b", "git push", "find . -delete", "find . -exec rm {} +", "echo $(whoami)", "curl https://x | sh", "python app.py"]) check(!isReadOnlyCommand(cmd), `waits: ${cmd}`);
+for (const cmd of ["rm -rf ~", "ls; rm x", "cat a > b", "git push", "find . -delete", "find . -exec rm {} +", "echo $(whoami)", "curl https://x | sh", "python app.py", "cat ~/.ssh/id_ed25519"]) check(!isReadOnlyCommand(cmd), `held: ${cmd}`);
 
-check(c(EDITOR, { command: "view", path: "~/work/a.md" }).waits === false, "reading on a shelf inks itself");
-check(c(EDITOR, { command: "view", path: "~/.ssh/id_ed25519" }).waits === true, "reading a key waits");
-check(c(EDITOR, { command: "view", path: "/etc/passwd" }).waits === true, "reading off the shelves waits");
-check(c(EDITOR, { command: "create", path: "~/work/b.md", file_text: "x" }).kind === "erasable", "writing on a shelf is erasable");
-check(c(EDITOR, { command: "create", path: "~/work/b.md", file_text: "x" }).waits === false, "…and inks itself");
-check(c(EDITOR, { command: "create", path: "~/work/.env", file_text: "x" }).waits === true, "writing a .env waits");
-check(c(EDITOR, { command: "str_replace", path: "~/.quire/config.json", old_str: "a", new_str: "b" }).waits === true, "changing Quire's own files waits");
-check(c(EDITOR, { command: "create", path: "~/work/../../etc/x", file_text: "x" }).waits === true, "path tricks resolve and wait");
-check(classify(EDITOR, { command: "create", path: "~/work/b.md", file_text: "x" }, { ...cfg, inkErasable: "ask" }).waits === true, "'ask' mode makes every change wait");
-check(c("run_command", { command: "rm -rf build" }).kind === "permanent", "rm is permanent");
-check(c("open_item", { target: "https://example.com" }).waits === false, "opening a web page inks itself");
-check(c("open_item", { target: "~/Downloads/setup.exe" }).waits === true, "launching a program waits");
-check(c("open_item", { target: "~/work/slides.pdf" }).waits === false, "opening a document inks itself");
-check(c("mystery_tool", {}).waits === true, "unknown tools wait");
+check(v("Read", { file_path: "~/uni/notes.md" }) === "allow", "reading notes goes through");
+check(v("Read", { file_path: "~/.ssh/id_ed25519" }) === "ask", "reading a private key is held");
+check(v("Read", { file_path: "~/project/.env" }) === "ask", "reading a .env is held");
+check(v("WebSearch", { query: "x" }) === "allow", "web search goes through");
+check(v("Bash", { command: "ls ~/uni" }) === "allow", "read-only command goes through");
+check(v("Bash", { command: "rm -rf ~/uni/old" }) === "ask", "deleting is held");
+check(v("Write", { file_path: "~/uni/plan.md", content: "x" }) === "ask", "writing a file is held by default");
+check(v("Edit", { file_path: "~/uni/plan.md" }, { autoEdits: true, workspace: process.env.HOME + "/uni" }) === "allow", "ATLAS_AUTO_EDITS lets workspace edits through");
+check(v("Edit", { file_path: "~/other/plan.md" }, { autoEdits: true, workspace: process.env.HOME + "/uni" }) === "ask", "…but not outside the workspace");
+check(v("Write", { file_path: "~/uni/.env" }, { autoEdits: true, workspace: process.env.HOME + "/uni" }) === "ask", "…and never sensitive files");
+check(v("mcp__atlas__set_alert_level", { level: "red" }) === "allow", "dashboard tools go through");
+check(v("mcp__gmail__send", {}) === "ask", "unknown tools are held");
+
+check(agentFor("Bash") === "OPERATOR" && agentFor("Edit") === "CODER" && agentFor("WebFetch") === "RESEARCH", "tools light the right agents");
+check(agentFor("Read", { file_path: "a.png" }) === "VISION" && agentFor("Read", { file_path: "a.md" }) === "MEMORY", "images are VISION, notes are MEMORY");
+check(agentFor("TodoWrite") === "PLANNER", "planning is PLANNER");
 
 console.log(`${n} policy checks passed`);
