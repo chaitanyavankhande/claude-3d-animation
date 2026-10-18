@@ -109,7 +109,7 @@ try {
         waiters.forEach((w) => w());
       }
     }
-  })();
+  })().catch(() => { /* the stream closes when the server stops */ });
   const until = (cond, ms = 8000) => new Promise((resolve, reject) => {
     const t = setTimeout(() => reject(new Error("timed out waiting; log:\n" + log)), ms);
     const check = () => { const v = cond(); if (v) { clearTimeout(t); resolve(v); } };
@@ -173,7 +173,9 @@ try {
   console.error("\nFAILED:", e.message);
   process.exitCode = 1;
 } finally {
+  const exited = new Promise((r) => quire.once("exit", r));
   quire.kill(); mock.close();
+  await exited;                       // Quire saves the book on shutdown; let it finish first
   await fs.rm(TMP, { recursive: true, force: true });
   process.exit();
 }
