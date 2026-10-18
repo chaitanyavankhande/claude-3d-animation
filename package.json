@@ -1,13 +1,16 @@
 {
-  "name": "atlas-agentic-os",
+  "name": "quire",
   "version": "1.0.0",
   "private": true,
-  "description": "A 15-second Three.js boot sequence that lands on a JARVIS-style agentic OS dashboard, with Claude as the brain.",
+  "description": "A personal operating system shaped like a notebook. Claude is the scribe: it writes what it means to do in pencil, and only what you allow becomes ink.",
   "type": "module",
   "license": "MIT",
+  "engines": { "node": ">=20" },
   "scripts": {
-    "start": "node brain/server.mjs",
-    "record": "node scripts/record.mjs"
+    "start": "node server/quire.mjs",
+    "test": "node test/policy.mjs && node test/e2e.mjs",
+    "record": "node scripts/record.mjs",
+    "record:tour": "node scripts/record.mjs --tour"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.131.0"
